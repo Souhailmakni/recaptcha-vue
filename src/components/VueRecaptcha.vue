@@ -70,8 +70,9 @@ function renderWidget() {
   })
 
   isLoaded.value = true
-  emit('widget-id', widgetId.value)
-  clearTimeout(timeoutHandle!)
+  if (widgetId.value !== null) {
+    emit('widget-id', widgetId.value)
+  }  clearTimeout(timeoutHandle!)
 }
 
 function loadScript() {

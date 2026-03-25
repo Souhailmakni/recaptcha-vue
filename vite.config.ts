@@ -16,18 +16,13 @@ export default defineConfig({
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'RecaptchaVue',
       fileName: 'recaptcha-vue',
+      formats: ['es', 'umd'],
     },
-    rollupOptions: {
-      // Vue is a peer dependency — don't bundle it
-      external: ['vue'],
-      output: {
-        globals: {
-          vue: 'Vue',
-        },
-      },
-    },
+    target: 'esnext',
     sourcemap: true,
-    // Keep the dist directory small
-    minify: 'esbuild',
+    minify: 'oxc',   // ← was 'esbuild', Vite 8 uses oxc now
+  },
+  resolve: {
+    dedupe: ['vue'],
   },
 })
