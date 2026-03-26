@@ -248,30 +248,6 @@ Each `<VueRecaptcha>` instance manages its own unique widget ID and global callb
 
 ---
 
-## Development
-
-```bash
-git clone https://github.com/Souhailmakni/recaptcha-vue.git
-cd recaptcha-vue
-npm install
-npm run build      # produce dist/
-npm run typecheck  # vue-tsc
-```
-
-### Publishing to npm
-
-```bash
-# Bump version in package.json, then:
-git commit -am "release: v1.0.1"
-git tag v1.0.1
-git push --follow-tags
-# GitHub Actions will publish automatically on 'release:' commits to main
-# Or publish manually:
-npm publish --access public
-```
-
----
-
 ## License
 
 [MIT](LICENSE) © Souhail Makni
