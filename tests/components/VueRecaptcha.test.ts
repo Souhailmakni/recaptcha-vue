@@ -22,6 +22,7 @@ describe('VueRecaptcha', () => {
     wrapper?.unmount()
     wrapper = null
     delete (window as any).grecaptcha
+    document.getElementById('google-recaptcha-script')?.remove()
     vi.useRealTimers()
   })
 
@@ -133,5 +134,128 @@ describe('VueRecaptcha', () => {
     vi.advanceTimersByTime(1000)
 
     expect(wrapper.emitted('error')).toHaveLength(1)
+  })
+
+  it('no-ops reset/execute/getResponse when the widget has not rendered yet', () => {
+    delete (window as any).grecaptcha
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+
+    expect(() => wrapper!.vm.reset()).not.toThrow()
+    expect(() => wrapper!.vm.execute()).not.toThrow()
+    expect(wrapper.vm.getResponse()).toBe('')
+  })
+
+  it('injects the script with the language param when grecaptcha is not yet loaded', () => {
+    delete (window as any).grecaptcha
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k', language: 'fr' } })
+
+    const scriptEl = document.getElementById('google-recaptcha-script') as HTMLScriptElement
+    expect(scriptEl).not.toBeNull()
+    expect(scriptEl.src).toContain('&hl=fr')
+    expect(scriptEl.async).toBe(true)
+    expect(scriptEl.defer).toBe(true)
+  })
+
+  it('renders the widget once the injected script calls its own onload callback', () => {
+    delete (window as any).grecaptcha
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+
+    const scriptEl = document.getElementById('google-recaptcha-script') as HTMLScriptElement
+    const onloadName = scriptEl.src.match(/onload=([^&]+)/)?.[1] as string
+
+    const { render } = mockGrecaptcha()
+    ;(window as any)[onloadName]()
+
+    expect(render).toHaveBeenCalledTimes(1)
+  })
+
+  it('no-ops if the onload callback fires before grecaptcha is actually ready', () => {
+    delete (window as any).grecaptcha
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+
+    const scriptEl = document.getElementById('google-recaptcha-script') as HTMLScriptElement
+    const onloadName = scriptEl.src.match(/onload=([^&]+)/)?.[1] as string
+
+    expect(() => (window as any)[onloadName]()).not.toThrow()
+    expect(wrapper.emitted('widget-id')).toBeUndefined()
+  })
+
+  it('emits error when the injected script itself fails to load', () => {
+    delete (window as any).grecaptcha
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+
+    const scriptEl = document.getElementById('google-recaptcha-script') as HTMLScriptElement
+    scriptEl.onerror?.(new Event('error'))
+
+    expect(wrapper.emitted('error')).toHaveLength(1)
+  })
+
+  it('waits for an in-flight script instead of injecting a second one', () => {
+    delete (window as any).grecaptcha
+    const existingScript = document.createElement('script')
+    existingScript.id = 'google-recaptcha-script'
+    document.head.appendChild(existingScript)
+
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+
+    expect(document.querySelectorAll('#google-recaptcha-script')).toHaveLength(1)
+  })
+
+  it('renders the widget once polling detects grecaptcha became available', () => {
+    delete (window as any).grecaptcha
+    const existingScript = document.createElement('script')
+    existingScript.id = 'google-recaptcha-script'
+    document.head.appendChild(existingScript)
+
+    vi.useFakeTimers()
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+
+    // First poll tick: grecaptcha still isn't ready, interval keeps waiting
+    vi.advanceTimersByTime(100)
+
+    const { render } = mockGrecaptcha()
+    vi.advanceTimersByTime(100)
+
+    expect(render).toHaveBeenCalledTimes(1)
+  })
+
+  it('stops polling harmlessly if the component unmounts before grecaptcha becomes available', () => {
+    delete (window as any).grecaptcha
+    const existingScript = document.createElement('script')
+    existingScript.id = 'google-recaptcha-script'
+    document.head.appendChild(existingScript)
+
+    vi.useFakeTimers()
+    const localWrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+    localWrapper.unmount()
+
+    const { render } = mockGrecaptcha()
+    expect(() => vi.advanceTimersByTime(100)).not.toThrow()
+    expect(render).not.toHaveBeenCalled()
+  })
+
+  it('does not emit widget-id when grecaptcha.render fails to return an id', () => {
+    mockGrecaptcha()
+    ;(window.grecaptcha as any).render = vi.fn().mockReturnValue(null)
+
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+
+    expect(wrapper.emitted('widget-id')).toBeUndefined()
+  })
+
+  it('getResponse falls back to an empty string if grecaptcha becomes unavailable', () => {
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k' } })
+    delete (window as any).grecaptcha
+
+    expect(wrapper.vm.getResponse()).toBe('')
+  })
+
+  it('does not re-emit error from loadingTimeout once the widget already loaded', () => {
+    vi.useFakeTimers()
+    wrapper = mount(VueRecaptcha, { props: { sitekey: 'k', loadingTimeout: 1000 } })
+
+    vi.advanceTimersByTime(1000)
+
+    expect(wrapper.emitted('error')).toBeUndefined()
   })
 })
