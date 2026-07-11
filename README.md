@@ -7,7 +7,7 @@
 [![license](https://img.shields.io/npm/l/recaptcha-vue)](LICENSE)
 [![CI](https://github.com/Souhailmakni/recaptcha-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/Souhailmakni/recaptcha-vue/actions)
 [![coverage](https://codecov.io/gh/Souhailmakni/recaptcha-vue/branch/main/graph/badge.svg)](https://codecov.io/gh/Souhailmakni/recaptcha-vue)
-[![node](https://img.shields.io/node/v/recaptcha-vue)](package.json)
+[![node](https://img.shields.io/node/v/recaptcha-vue?cacheSeconds=3600)](package.json)
 [![known vulnerabilities](https://snyk.io/test/npm/recaptcha-vue/badge.svg)](https://snyk.io/test/npm/recaptcha-vue)
 
 ---
