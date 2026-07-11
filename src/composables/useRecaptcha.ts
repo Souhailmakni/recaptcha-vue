@@ -11,7 +11,7 @@ interface UseRecaptchaReturn {
   onExpire: () => void
   /** Call when @error fires */
   onError: () => void
-  /** Resets state (does NOT reset the widget — call recaptchaRef.reset() for that) */
+  /** Resets state (does NOT reset the widget, call recaptchaRef.reset() for that) */
   reset: () => void
 }
 

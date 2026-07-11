@@ -84,7 +84,7 @@ function loadScript() {
     return
   }
 
-  // Script already injected by another instance — wait for it
+  // Script already injected by another instance, wait for it
   if (document.getElementById('google-recaptcha-script')) {
     waitForGrecaptcha()
     return
@@ -161,7 +161,7 @@ onBeforeUnmount(() => {
   widgetId.value = null
 })
 
-// Sitekey hotswap — reset widget when sitekey changes
+// Sitekey hotswap (reset widget when sitekey changes)
 watch(
   () => props.sitekey,
   () => {

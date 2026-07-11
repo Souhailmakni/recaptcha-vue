@@ -6,21 +6,76 @@
 [![npm](https://img.shields.io/npm/v/recaptcha-vue)](https://www.npmjs.com/package/recaptcha-vue)
 [![license](https://img.shields.io/npm/l/recaptcha-vue)](LICENSE)
 [![CI](https://github.com/Souhailmakni/recaptcha-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/Souhailmakni/recaptcha-vue/actions)
+[![coverage](https://codecov.io/gh/Souhailmakni/recaptcha-vue/branch/main/graph/badge.svg)](https://codecov.io/gh/Souhailmakni/recaptcha-vue)
+[![node](https://img.shields.io/node/v/recaptcha-vue)](package.json)
+[![known vulnerabilities](https://snyk.io/test/npm/recaptcha-vue/badge.svg)](https://snyk.io/test/npm/recaptcha-vue)
+
+---
+
+## Table of contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Security](#security)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Props](#props)
+- [Events](#events)
+- [Exposed API](#exposed-api-via-ref)
+- [`useRecaptcha` composable](#userecaptcha-composable)
+- [v-model](#v-model)
+- [Laravel + Inertia.js integration](#laravel--inertiajs-integration)
+- [Dark theme example](#dark-theme-example)
+- [Multiple instances on one page](#multiple-instances-on-one-page)
+- [Local development](#local-development)
+- [License](#license)
 
 ---
 
 ## Features
 
-- ✅ **Vue 3** Composition API + `<script setup>`
-- 🔑 **TypeScript** — full types for props, emits, and the exposed API
-- 🧩 **`useRecaptcha` composable** — reactive `token` & `isVerified` state
-- 🔁 **v-model** support — bind the verified token directly
-- 🌐 **Multiple instances** — safe to use more than one widget per page
-- 🎨 **Theming** — `light` / `dark`, `normal` / `compact`
-- 🌍 **Language** — pass any BCP 47 code (`hl` param)
-- ⏱️ **Load timeout** — emits `error` if the script never loads
-- 🔌 **Laravel + Inertia.js** — ready-to-use controller & form examples
-- 📦 **ESM + CJS** dual build via Vite
+- **Vue 3** Composition API + `<script setup>`
+- **TypeScript**: full types for props, emits, and the exposed API
+- **`useRecaptcha` composable**: reactive `token` & `isVerified` state
+- **v-model** support: bind the verified token directly
+- **Multiple instances**: safe to use more than one widget per page
+- **Theming**: `light` / `dark`, `normal` / `compact`
+- **Language**: pass any BCP 47 code (`hl` param)
+- **Load timeout**: emits `error` if the script never loads
+- **Laravel + Inertia.js**: ready-to-use controller & form examples
+- **ESM + CJS** dual build via Vite
+
+---
+
+## Requirements
+
+| | Version |
+|---|---|
+| Node.js | `>=20.19.0` (see [`.nvmrc`](.nvmrc)) |
+| Vue | `^3.3.0` (peer dependency) |
+
+---
+
+## Security
+
+`recaptcha-vue` ships with **zero runtime dependencies**. The published package
+only depends on Vue (as a peer dependency), so there's no third-party code in the
+bundle consumers install.
+
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `yarn audit` on
+every push and pull request:
+
+- **Production dependencies** are audited with `yarn audit --groups dependencies`
+  and the build fails on any known vulnerability. This currently has nothing to
+  audit (zero runtime deps), and guards against anything introduced in the future.
+- **Dev dependencies** (build/test tooling such as `vite-plugin-dts` and
+  `@vue/test-utils`) are audited separately and reported, without failing the
+  build. These packages never ship to consumers, and some pull in vulnerable
+  transitive sub-dependencies upstream that can't be fixed locally. They're
+  tracked for visibility rather than blocking merges.
+
+Run `yarn audit` (or `yarn run audit` for the production-only check) locally at
+any time.
 
 ---
 
@@ -33,8 +88,6 @@ yarn add recaptcha-vue
 # or
 pnpm add recaptcha-vue
 ```
-
-> **Vue 3.3+** is required as a peer dependency.
 
 ---
 
@@ -111,7 +164,7 @@ createApp(App).use(RecaptchaPlugin).mount('#app')
 | `language` | `string` | `''` | BCP 47 language code, e.g. `'fr'`, `'ar'` |
 | `badge` | `'bottomright' \| 'bottomleft' \| 'inline'` | `'bottomright'` | Badge position (invisible size only) |
 | `isolated` | `boolean` | `false` | Isolate widget from others on the page |
-| `modelValue` | `string` | `''` | v-model — holds the verified token |
+| `modelValue` | `string` | `''` | v-model, holds the verified token |
 
 ---
 
@@ -120,8 +173,8 @@ createApp(App).use(RecaptchaPlugin).mount('#app')
 | Event | Payload | Description |
 |---|---|---|
 | `verify` | `token: string` | User completed the challenge; token ready to send to server |
-| `expire` | — | Token expired; user must re-verify |
-| `error` | — | Widget or network error |
+| `expire` | - | Token expired; user must re-verify |
+| `error` | - | Widget or network error |
 | `widget-id` | `id: number` | Internal widget ID after render |
 | `update:modelValue` | `token: string` | v-model update |
 
@@ -143,12 +196,12 @@ recaptchaRef.value?.getResponse()  // Get current token string
 
 ```ts
 const {
-  token,       // Ref<string>  — current token ('' when expired / error)
-  isVerified,  // Ref<boolean> — true when a valid token exists
+  token,       // Ref<string>: current token ('' when expired / error)
+  isVerified,  // Ref<boolean>: true when a valid token exists
   onVerify,    // (token: string) => void
   onExpire,    // () => void
   onError,     // () => void
-  reset,       // () => void — clears local state (call recaptchaRef.reset() too)
+  reset,       // () => void: clears local state (call recaptchaRef.reset() too)
 } = useRecaptcha()
 ```
 
@@ -174,7 +227,7 @@ const captchaToken = ref('')
 
 ## Laravel + Inertia.js integration
 
-### Front-end — ContactForm.vue
+### Front-end (ContactForm.vue)
 
 See [`examples/inertia/ContactForm.vue`](examples/inertia/ContactForm.vue) for a full working example using `useForm` from `@inertiajs/vue3`.
 
@@ -182,7 +235,7 @@ Key points:
 1. Store the verified token in `form.recaptcha_token`
 2. Always reset the widget after a successful **or** failed submission
 
-### Back-end — ContactController.php
+### Back-end (ContactController.php)
 
 See [`examples/laravel/ContactController.php`](examples/laravel/ContactController.php).
 
@@ -245,6 +298,50 @@ Each `<VueRecaptcha>` instance manages its own unique widget ID and global callb
 <VueRecaptcha :sitekey="siteKey" @verify="handleLoginCaptcha" />
 <VueRecaptcha :sitekey="siteKey" @verify="handleSignupCaptcha" />
 ```
+
+---
+
+## Local development
+
+Clone the repo and install dependencies:
+
+```bash
+git clone https://github.com/Souhailmakni/recaptcha-vue.git
+cd recaptcha-vue
+yarn install
+```
+
+### Demo app
+
+`yarn dev` serves a small demo at [`index.html`](index.html) / [`demo/`](demo) that
+exercises the component through both the `v-model` API and the `useRecaptcha`
+composable. It works out of the box with Google's official test site key (always
+passes, never use it in production). No `.env` file required:
+
+```bash
+yarn dev
+```
+
+To try your own site key instead, copy `.env.example` to `.env` and set
+`VITE_RECAPTCHA_SITE_KEY`.
+
+The `demo/` directory and root `index.html` are excluded from the published npm
+package (see the `files` field in `package.json`) and from the TypeScript project
+used for `typecheck`/`build` (see `tsconfig.json`), so they have no effect on
+consumers of the library.
+
+### Scripts
+
+| Command | Description |
+|---|---|
+| `yarn dev` | Start the demo app with hot reload |
+| `yarn typecheck` | Type-check `src/` with `vue-tsc` |
+| `yarn test` | Run the test suite once with Vitest |
+| `yarn test:watch` | Run the test suite in watch mode |
+| `yarn test:coverage` | Run the test suite with a coverage report |
+| `yarn audit` | Audit production dependencies for known vulnerabilities |
+| `yarn build` | Type-check, then build the ESM + CJS library bundles to `dist/` |
+| `yarn lint` | Lint and auto-fix `src/` with ESLint |
 
 ---
 

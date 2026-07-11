@@ -6,7 +6,7 @@ import type { RecaptchaProps, RecaptchaEmits } from './types'
 export { VueRecaptcha, useRecaptcha }
 export type { RecaptchaProps, RecaptchaEmits }
 
-/** Vue plugin — registers <VueRecaptcha> globally */
+/** Vue plugin that registers <VueRecaptcha> globally */
 export default {
   install(app: App) {
     app.component('VueRecaptcha', VueRecaptcha)
