@@ -6,9 +6,14 @@
 [![npm](https://img.shields.io/npm/v/recaptcha-vue)](https://www.npmjs.com/package/recaptcha-vue)
 [![license](https://img.shields.io/npm/l/recaptcha-vue)](LICENSE)
 [![CI](https://github.com/Souhailmakni/recaptcha-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/Souhailmakni/recaptcha-vue/actions)
-[![coverage](https://codecov.io/gh/Souhailmakni/recaptcha-vue/branch/main/graph/badge.svg)](https://codecov.io/gh/Souhailmakni/recaptcha-vue)
 [![node](https://img.shields.io/node/v/recaptcha-vue?cacheSeconds=3600)](package.json)
 [![known vulnerabilities](https://snyk.io/test/npm/recaptcha-vue/badge.svg)](https://snyk.io/test/npm/recaptcha-vue)
+
+Coverage (generated locally with `yarn test:coverage`, no external service):
+
+| Statements | Branches | Functions | Lines |
+|---|---|---|---|
+| ![Statements](https://img.shields.io/badge/statements-83.8%25-yellow.svg?style=flat) | ![Branches](https://img.shields.io/badge/branches-55.88%25-red.svg?style=flat) | ![Functions](https://img.shields.io/badge/functions-80%25-yellow.svg?style=flat) | ![Lines](https://img.shields.io/badge/lines-87.87%25-yellow.svg?style=flat) |
 
 ---
 
@@ -338,7 +343,7 @@ consumers of the library.
 | `yarn typecheck` | Type-check `src/` with `vue-tsc` |
 | `yarn test` | Run the test suite once with Vitest |
 | `yarn test:watch` | Run the test suite in watch mode |
-| `yarn test:coverage` | Run the test suite with a coverage report |
+| `yarn test:coverage` | Run the test suite with coverage and update the README badges |
 | `yarn audit` | Audit production dependencies for known vulnerabilities |
 | `yarn build` | Type-check, then build the ESM + CJS library bundles to `dist/` |
 | `yarn lint` | Lint and auto-fix `src/` with ESLint |
