@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Typecheck & Build
+    name: Typecheck, Test & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +23,24 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Audit production dependencies
+        run: yarn audit --groups dependencies
+
+      - name: Audit dev dependencies (report only)
+        run: yarn audit --groups devDependencies || true
+
       - name: Typecheck
         run: yarn typecheck
+
+      - name: Run tests with coverage
+        run: yarn test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - name: Build library
         run: yarn build
