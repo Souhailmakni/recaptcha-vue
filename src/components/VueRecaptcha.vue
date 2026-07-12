@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<RecaptchaProps>(), {
 const emit = defineEmits<RecaptchaEmits>()
 
 const containerRef = ref<HTMLDivElement | null>(null)
+const containerClass = ref('vue-recaptcha')
 const widgetId = ref<number | null>(null)
 const isLoaded = ref(false)
 const hasError = ref(false)
@@ -174,7 +175,7 @@ watch(
 </script>
 
 <template>
-  <div ref="containerRef" class="vue-recaptcha" />
+  <div ref="containerRef" :class="containerClass" />
 </template>
 
 <style scoped>
