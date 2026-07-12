@@ -21,6 +21,16 @@ export default defineConfig({
     target: 'esnext',
     sourcemap: true,
     minify: 'oxc',   // ← was 'esbuild', Vite 8 uses oxc now
+    rollupOptions: {
+      // Vue must come from the consuming app's own instance, not be bundled here -
+      // two separate Vue runtimes in one page silently breaks refs/reactivity
+      // across the boundary (Vue's "current rendering instance" tracking is
+      // module-scoped, so a bundled copy never matches the host app's copy).
+      external: ['vue'],
+      output: {
+        globals: { vue: 'Vue' },
+      },
+    },
   },
   resolve: {
     dedupe: ['vue'],

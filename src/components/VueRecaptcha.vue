@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 import type { RecaptchaProps, RecaptchaEmits } from '../types'
 
 const props = withDefaults(defineProps<RecaptchaProps>(), {
@@ -15,7 +16,9 @@ const props = withDefaults(defineProps<RecaptchaProps>(), {
 const emit = defineEmits<RecaptchaEmits>()
 
 const containerRef = ref<HTMLDivElement | null>(null)
-const containerClass = ref('vue-recaptcha')
+function setContainerRef(el: Element | ComponentPublicInstance | null) {
+  containerRef.value = el as HTMLDivElement | null
+}
 const widgetId = ref<number | null>(null)
 const isLoaded = ref(false)
 const hasError = ref(false)
@@ -175,7 +178,7 @@ watch(
 </script>
 
 <template>
-  <div ref="containerRef" :class="containerClass" />
+  <div :ref="setContainerRef" class="vue-recaptcha" />
 </template>
 
 <style scoped>
