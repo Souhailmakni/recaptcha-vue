@@ -24,6 +24,7 @@ Coverage (generated locally with `yarn test:coverage`, no external service):
 - [Security](#security)
 - [Installation](#installation)
 - [Quick start](#quick-start)
+- [Token expiry and resetting](#token-expiry-and-resetting)
 - [Props](#props)
 - [Events](#events)
 - [Exposed API](#exposed-api-via-ref)
@@ -154,6 +155,42 @@ import App from './App.vue'
 
 createApp(App).use(RecaptchaPlugin).mount('#app')
 ```
+
+---
+
+## Token expiry and resetting
+
+> [!IMPORTANT]
+> Read this before wiring up a form. The most common integration bug with any
+> reCAPTCHA v2 wrapper is a form that works once in testing, then silently
+> submits a stale or already-used token in production.
+
+A verified token is only valid for **about 2 minutes** ([Google's own limit](https://developers.google.com/recaptcha/docs/faq#my-users-are-getting-a-please-try-again-error-why)),
+and it's **single-use**: once you've submitted it to your backend, that exact
+token cannot be verified again, whether verification succeeded or failed.
+Two failure modes follow directly from that:
+
+1. **The user waits too long.** The checkbox stays visually "checked," but
+   the token behind it has expired. Handle this with `@expire`/`onExpire`
+   (from `useRecaptcha`), which flips `isVerified` back to `false` so your
+   submit button disables itself again instead of sending a dead token.
+2. **The user submits, something else fails, they retry.** Say the token
+   verifies fine but a different field (email format, password match, etc.)
+   fails server-side validation. If you don't reset the widget, the user
+   fixes that field and resubmits the *same* token, which your backend now
+   rejects, and it looks like reCAPTCHA itself is broken.
+
+The fix for both is the same one-liner, and it belongs in every code path
+that leaves the form, success or failure:
+
+```ts
+recaptchaRef.value?.reset()
+```
+
+Concretely: call `.reset()` in your success handler, in your error handler,
+and anywhere else you're about to let the user try submitting again. Don't
+call it only in the success path. See the [Laravel + Inertia.js example](#laravel--inertiajs-integration)
+below for `onSuccess`/`onError` reset calls in a real form.
 
 ---
 
