@@ -39,7 +39,16 @@ async function submit() {
       onError() // clears local state too
     },
     onError: () => {
-      // Google recommends resetting after every failed attempt
+      // This fires for ANY validation error, not just recaptcha_token - e.g.
+      // an invalid email. The token is single-use either way, so it must be
+      // reset regardless of which field actually failed.
+      //
+      // Deliberately NOT calling form.reset() here. That clears every field,
+      // including name/email/message the user already typed. Inertia already
+      // leaves form.name/email/message untouched on error by default and
+      // only populates form.errors, so the user sees what they typed plus
+      // the specific error, fixes it, and resubmits - without retyping the
+      // whole form because the recaptcha token expired in the background.
       recaptchaRef.value?.reset()
       onError()
     },

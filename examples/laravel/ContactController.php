@@ -58,8 +58,16 @@ class ContactController extends Controller
         if (! $response->successful() || ! $response->json('success')) {
             $errorCodes = $response->json('error-codes', []);
 
+            // "timeout-or-duplicate" is Google's code for an expired or
+            // already-verified token - the case the reset-after-failure
+            // flow in the readme is built around. Everything else (bad
+            // secret, malformed request) gets a generic message.
+            $message = in_array('timeout-or-duplicate', $errorCodes, true)
+                ? __('reCAPTCHA expired or was already used. Please tick the box again.')
+                : __('reCAPTCHA verification failed. Please try again.');
+
             throw ValidationException::withMessages([
-                'recaptcha_token' => __('reCAPTCHA verification failed. Please try again.'),
+                'recaptcha_token' => $message,
             ]);
         }
     }

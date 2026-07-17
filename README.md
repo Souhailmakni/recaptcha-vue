@@ -163,7 +163,9 @@ createApp(App).use(RecaptchaPlugin).mount('#app')
 > [!IMPORTANT]
 > Read this before wiring up a form. The most common integration bug with any
 > reCAPTCHA v2 wrapper is a form that works once in testing, then silently
-> submits a stale or already-used token in production.
+> submits a stale or already-used token in production. (Separately: your
+> server must verify the token regardless of expiry, see
+> [Client state is not verification](#client-state-is-not-verification).)
 
 A verified token is only valid for **about 2 minutes** ([Google's own limit](https://developers.google.com/recaptcha/docs/faq#my-users-are-getting-a-please-try-again-error-why)),
 and it's **single-use**: once you've submitted it to your backend, that exact
@@ -220,6 +222,10 @@ below for `onSuccess`/`onError` reset calls in a real form.
 | `widget-id` | `id: number` | Internal widget ID after render |
 | `update:modelValue` | `token: string` | v-model update |
 
+"Ready to send to server" is doing a lot of work in that first row. See
+[Client state is not verification](#client-state-is-not-verification) for
+why sending it isn't the same as being verified.
+
 ---
 
 ## Exposed API (via `ref`)
@@ -239,13 +245,33 @@ recaptchaRef.value?.getResponse()  // Get current token string
 ```ts
 const {
   token,       // Ref<string>: current token ('' when expired / error)
-  isVerified,  // Ref<boolean>: true when a valid token exists
+  isVerified,  // Ref<boolean>: true when a valid token exists (client-side only, see below)
   onVerify,    // (token: string) => void
   onExpire,    // () => void
   onError,     // () => void
   reset,       // () => void: clears local state (call recaptchaRef.reset() too)
 } = useRecaptcha()
 ```
+
+### Client state is not verification
+
+> [!WARNING]
+> `isVerified` and `token` are client-side state only. They exist to drive
+> UX, e.g. disabling the submit button until the checkbox is solved, and
+> they are never proof that verification actually happened. Any client can
+> set them to whatever it wants before the request reaches your server.
+>
+> Your server must independently POST the token to
+> `https://www.google.com/recaptcha/api/siteverify` with your secret key,
+> check the `success` field, and reject the request when it's false. See
+> [Laravel + Inertia.js integration](#laravel--inertiajs-integration) for a
+> full working example of that check.
+>
+> Tokens are also single-use and expire after about 2 minutes (see
+> [Token expiry and resetting](#token-expiry-and-resetting)). A reused or
+> expired token comes back from `siteverify` as `success: false` with
+> `error-codes: ["timeout-or-duplicate"]`, so that response already tells
+> you which case you're in without any extra client-side bookkeeping.
 
 ---
 
@@ -276,6 +302,32 @@ See [`examples/inertia/ContactForm.vue`](examples/inertia/ContactForm.vue) for a
 Key points:
 1. Store the verified token in `form.recaptcha_token`
 2. Always reset the widget after a successful **or** failed submission
+
+**Walkthrough: server rejects an expired or reused token.** This is the
+scenario that actually breaks in production, so here's exactly what happens,
+step by step, with the example above and [`ContactController.php`](examples/laravel/ContactController.php):
+
+1. The token expires (idle too long) or was already used in a prior request.
+   The checkbox still looks checked; nothing in the UI has changed yet.
+2. The user submits. Your controller's `Http::asForm()->post(...)` call to
+   Google comes back with `success: false`, so it throws a
+   `ValidationException` on the `recaptcha_token` key. Laravel turns that
+   into a 422 with `errors: { recaptcha_token: [...] }`.
+3. Inertia's `form.post()` sees the 422 and calls `onError`, populating
+   `form.errors.recaptcha_token` (which the template renders) - it does
+   **not** touch `form.name`, `form.email`, or `form.message`. Inertia only
+   clears form data when you explicitly call `form.reset()`, and this
+   example deliberately doesn't call it here.
+4. Our `onError` handler calls `recaptchaRef.value?.reset()`, which reloads
+   the widget and clears the local `token`/`isVerified` state. The checkbox
+   goes back to unchecked.
+5. The user sees their name/email/message exactly as they left them, plus
+   the recaptcha error, re-checks the box, and resubmits. Nothing they
+   already typed is lost.
+
+The one thing to get right: don't call `form.reset()` in the same handler
+that resets the widget on error. That's what wipes the rest of the form
+along with the stale token.
 
 ### Back-end (ContactController.php)
 
