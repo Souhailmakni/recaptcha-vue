@@ -29,11 +29,12 @@
   "module": "./dist/recaptcha-vue.js",
   "exports": {
     ".": {
+      "types": "./dist/src/index.d.ts",
       "import": "./dist/recaptcha-vue.js",
       "require": "./dist/recaptcha-vue.umd.cjs"
     }
   },
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist",
     "README.md",
