@@ -1,7 +1,8 @@
 # recaptcha-vue
 
-> Lightweight, zero-dependency Vue 3 component for **Google reCAPTCHA v2 (checkbox)**  
+> Lightweight, zero-dependency Vue 3 component for **Google reCAPTCHA v2 (checkbox) and v3 (score-based)**  
 > with full TypeScript support, Vite library build, and first-class Laravel + Inertia.js integration.
+> Switch between v2 and v3 with a single `version` prop.
 
 [![npm](https://img.shields.io/npm/v/recaptcha-vue)](https://www.npmjs.com/package/recaptcha-vue)
 [![license](https://img.shields.io/npm/l/recaptcha-vue)](LICENSE)
@@ -13,7 +14,7 @@ Coverage (generated locally with `yarn test:coverage`, no external service):
 
 | Statements | Branches | Functions | Lines |
 |---|---|---|---|
-| ![Statements](https://img.shields.io/badge/statements-100%25-brightgreen.svg?style=flat) | ![Branches](https://img.shields.io/badge/branches-94.11%25-brightgreen.svg?style=flat) | ![Functions](https://img.shields.io/badge/functions-100%25-brightgreen.svg?style=flat) | ![Lines](https://img.shields.io/badge/lines-100%25-brightgreen.svg?style=flat) |
+| ![Statements](https://img.shields.io/badge/statements-96.08%25-brightgreen.svg?style=flat) | ![Branches](https://img.shields.io/badge/branches-88.23%25-yellow.svg?style=flat) | ![Functions](https://img.shields.io/badge/functions-97.14%25-brightgreen.svg?style=flat) | ![Lines](https://img.shields.io/badge/lines-97.04%25-brightgreen.svg?style=flat) |
 
 ---
 
@@ -28,6 +29,7 @@ Coverage (generated locally with `yarn test:coverage`, no external service):
 - [Props](#props)
 - [Events](#events)
 - [Exposed API](#exposed-api-via-ref)
+- [reCAPTCHA v3](#recaptcha-v3)
 - [`useRecaptcha` composable](#userecaptcha-composable)
 - [v-model](#v-model)
 - [Laravel + Inertia.js integration](#laravel--inertiajs-integration)
@@ -40,6 +42,7 @@ Coverage (generated locally with `yarn test:coverage`, no external service):
 
 ## Features
 
+- **v2 and v3** in one component: `version="v2"` (default) or `version="v3"`
 - **Vue 3** Composition API + `<script setup>`
 - **TypeScript**: full types for props, emits, and the exposed API
 - **`useRecaptcha` composable**: reactive `token` & `isVerified` state
@@ -200,14 +203,17 @@ below for `onSuccess`/`onError` reset calls in a real form.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `sitekey` | `string` | **required** | Your reCAPTCHA v2 site key |
-| `theme` | `'light' \| 'dark'` | `'light'` | Widget color scheme |
-| `size` | `'normal' \| 'compact'` | `'normal'` | Widget size |
-| `tabindex` | `number` | `0` | Tab index |
-| `loadingTimeout` | `number` | `30000` | ms before emitting `error` if widget never loads |
+| `sitekey` | `string` | **required** | Your reCAPTCHA site key |
+| `version` | `'v2' \| 'v3'` | `'v2'` | Which reCAPTCHA to use. See [reCAPTCHA v3](#recaptcha-v3) |
+| `action` | `string` | `'submit'` | **v3 only.** Default action when `execute()` is called with no argument |
+| `theme` | `'light' \| 'dark'` | `'light'` | **v2 only.** Widget color scheme |
+| `size` | `'normal' \| 'compact'` | `'normal'` | **v2 only.** Widget size |
+| `tabindex` | `number` | `0` | **v2 only.** Tab index |
+| `loadingTimeout` | `number` | `30000` | ms before emitting `error` if the script never loads |
 | `language` | `string` | `''` | BCP 47 language code, e.g. `'fr'`, `'ar'` |
-| `badge` | `'bottomright' \| 'bottomleft' \| 'inline'` | `'bottomright'` | Badge position (invisible size only) |
-| `isolated` | `boolean` | `false` | Isolate widget from others on the page |
+| `badge` | `'bottomright' \| 'bottomleft' \| 'inline'` | `'bottomright'` | **v2 only.** Badge position (invisible size only) |
+| `hideBadge` | `boolean` | `false` | **v3 only.** Hide the floating badge (see the legal note in [reCAPTCHA v3](#recaptcha-v3)) |
+| `isolated` | `boolean` | `false` | **v2 only.** Isolate widget from others on the page |
 | `modelValue` | `string` | `''` | v-model, holds the verified token |
 
 ---
@@ -233,10 +239,61 @@ why sending it isn't the same as being verified.
 ```ts
 const recaptchaRef = ref<InstanceType<typeof VueRecaptcha> | null>(null)
 
-recaptchaRef.value?.reset()        // Reset the widget
-recaptchaRef.value?.execute()      // Programmatically trigger (compact / invisible)
-recaptchaRef.value?.getResponse()  // Get current token string
+recaptchaRef.value?.reset()                // Reset the widget (v2) / clear the token (v3)
+await recaptchaRef.value?.execute('login') // v3: run the challenge, resolve the token
+recaptchaRef.value?.getResponse()          // Get current token string
 ```
+
+`execute(action?)` returns a `Promise<string>`. On v3 it runs the challenge for
+the action and resolves with the token. On v2 it triggers the challenge and
+resolves when the next verify fires.
+
+---
+
+## reCAPTCHA v3
+
+reCAPTCHA v3 is score-based and renders **no widget**: there is nothing to click.
+Set `version="v3"` and get a token on demand by calling `execute(action)` on the
+component ref, usually right before you submit. `@verify` still fires with the
+token, so `useRecaptcha` works exactly as it does for v2.
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { VueRecaptcha } from 'recaptcha-vue'
+
+const recaptchaRef = ref<InstanceType<typeof VueRecaptcha> | null>(null)
+
+async function submit() {
+  const token = await recaptchaRef.value!.execute('login')
+  await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 'g-recaptcha-response': token }),
+  })
+}
+</script>
+
+<template>
+  <!-- No visible widget on v3, just the floating badge -->
+  <VueRecaptcha ref="recaptchaRef" sitekey="YOUR_V3_SITE_KEY" version="v3" />
+  <button @click="submit">Log in</button>
+</template>
+```
+
+Notes specific to v3:
+
+- **Get a fresh token per submit.** v3 tokens are single-use and expire in about
+  2 minutes, so call `execute()` at submit time, not on mount.
+- **The badge and the law.** v3 shows a floating "protected by reCAPTCHA" badge.
+  You may hide it with `hideBadge`, but only if you then display the
+  [required legal text](https://developers.google.com/recaptcha/docs/faq#id-like-to-hide-the-recaptcha-badge-what-is-allowed)
+  yourself.
+- **Server-side gives you a score.** `siteverify` returns `score` (0.0 to 1.0)
+  and `action`. Reject low scores and confirm the action matches:
+  `if (! $response->json('success') || $response->json('score') < 0.5) { ... }`.
+- **One version per page.** Rendering a v2 and a v3 instance on the same page is
+  not supported (they share Google's single `grecaptcha` global). Pick one.
 
 ---
 

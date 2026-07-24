@@ -1,29 +1,48 @@
 export interface RecaptchaProps {
-  /** Your reCAPTCHA v2 site key from https://www.google.com/recaptcha/admin */
+  /** Your reCAPTCHA site key from https://www.google.com/recaptcha/admin */
   sitekey: string
 
-  /** Widget color scheme. Default: 'light' */
+  /**
+   * Which reCAPTCHA to use. Default: 'v2' (the visible checkbox).
+   * 'v3' is score-based and renders no widget; obtain a token by calling
+   * `execute(action)` on the component ref.
+   */
+  version?: 'v2' | 'v3'
+
+  /**
+   * v3 only: the default action name used when `execute()` is called without
+   * an argument. Default: 'submit'.
+   */
+  action?: string
+
+  /** v2 only. Widget color scheme. Default: 'light' */
   theme?: 'light' | 'dark'
 
-  /** Widget size. Default: 'normal' */
+  /** v2 only. Widget size. Default: 'normal' */
   size?: 'normal' | 'compact'
 
-  /** Tab index of the widget. Default: 0 */
+  /** v2 only. Tab index of the widget. Default: 0 */
   tabindex?: number
 
-  /** Timeout in ms before emitting an error if widget never loads. Default: 30000 */
+  /** Timeout in ms before emitting an error if the script never loads. Default: 30000 */
   loadingTimeout?: number
 
   /** Optional BCP 47 language code for the widget, e.g. 'fr', 'ar' */
   language?: string
 
   /**
-   * Position of the reCAPTCHA badge (only applies to invisible size).
+   * v2 only. Position of the reCAPTCHA badge (invisible size).
    * Default: 'bottomright'
    */
   badge?: 'bottomright' | 'bottomleft' | 'inline'
 
-  /** Whether to isolate this widget from others on the page */
+  /**
+   * v3 only. Hide the floating reCAPTCHA badge. If you hide it you must display
+   * the "protected by reCAPTCHA" legal text yourself (Google's terms require it).
+   */
+  hideBadge?: boolean
+
+  /** v2 only. Whether to isolate this widget from others on the page */
   isolated?: boolean
 
   /** v-model support: holds the verified token */
@@ -31,13 +50,16 @@ export interface RecaptchaProps {
 }
 
 export interface RecaptchaEmits {
-  /** Emitted when the user successfully completes the challenge; token is the response */
+  /**
+   * Emitted with the token: on v2 when the user completes the challenge, on v3
+   * whenever `execute()` resolves.
+   */
   (e: 'verify', token: string): void
-  /** Emitted when the response token expires */
+  /** v2 only. Emitted when the response token expires */
   (e: 'expire'): void
-  /** Emitted when reCAPTCHA encounters an error (network, script load, etc.) */
+  /** Emitted when reCAPTCHA encounters an error (network, script load, execute failure) */
   (e: 'error'): void
-  /** Emitted with the widget ID after the widget is rendered */
+  /** v2 only. Emitted with the widget ID after the widget is rendered */
   (e: 'widget-id', id: number): void
   /** v-model update */
   (e: 'update:modelValue', value: string): void
@@ -47,8 +69,13 @@ export interface RecaptchaEmits {
 export interface Grecaptcha {
   render(container: HTMLElement, params: Record<string, unknown>): number
   reset(widgetId?: number): void
-  execute(widgetId?: number): void
   getResponse(widgetId?: number): string
+  /** v3: run the challenge for an action and resolve with a token */
+  execute(siteKey: string, options: { action: string }): Promise<string>
+  /** v2 invisible: trigger the challenge for a widget */
+  execute(widgetId?: number): void
+  /** v3: run the callback once grecaptcha is ready */
+  ready(callback: () => void): void
 }
 
 declare global {
