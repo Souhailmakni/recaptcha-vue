@@ -1,7 +1,7 @@
 {
   "name": "recaptcha-vue",
-  "version": "1.0.9",
-  "description": "Lightweight Vue 3 reCAPTCHA v2 checkbox component with TypeScript, Vite library build, and Inertia.js support",
+  "version": "1.1.0",
+  "description": "Lightweight Vue 3 reCAPTCHA v2 (checkbox) and v3 (score-based) component with TypeScript, Vite library build, and Inertia.js support",
   "author": "Souhail Makni <maknisouhail@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -17,6 +17,7 @@
     "vue",
     "recaptcha",
     "recaptcha-v2",
+    "recaptcha-v3",
     "checkbox",
     "google-recaptcha",
     "inertia",
